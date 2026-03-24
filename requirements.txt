@@ -5,3 +5,4 @@ textblob
 transformers
 torch
 spacy
+gunicorn
