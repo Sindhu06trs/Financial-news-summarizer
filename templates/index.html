@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Financial Intelligence Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #1e3c72, #2a5298);
+    color: white;
+}
+
+/* NAVBAR */
+.navbar {
+    text-align: center;
+    padding: 20px;
+    font-size: 26px;
+    font-weight: bold;
+    color: white;
+}
+
+/* CONTAINER */
+.container {
+    width: 75%;
+    margin: auto;
+    padding: 20px;
+}
+
+/* CARD */
+.card {
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 15px;
+    margin-top: 20px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.3);
+    animation: slideUp 0.6s ease;
+    color: white;
+}
+
+/* INPUT */
+textarea {
+    width: 100%;
+    height: 120px;
+    border-radius: 12px;
+    padding: 10px;
+    border: none;
+    background: rgba(255,255,255,0.1);
+    color: white;
+}
+
+/* BUTTON */
+button {
+    padding: 10px 20px;
+    border-radius: 25px;
+    border: none;
+    background: linear-gradient(45deg,#00c6ff,#0072ff);
+    color: white;
+    cursor: pointer;
+    transition: 0.3s;
+}
+button:hover {
+    transform: scale(1.05);
+}
+
+/* CHART */
+.chart-container {
+    display: flex;
+    justify-content: space-between;
+}
+
+.chart-box {
+    width: 48%;
+}
+
+#pieChart {
+    max-width: 220px;
+    max-height: 220px;
+    margin: auto;
+}
+
+/* ANIMATION */
+@keyframes slideUp {
+    from {transform: translateY(40px); opacity:0}
+    to {transform: translateY(0); opacity:1}
+}
+</style>
+
+<script>
+// Copy text to clipboard
+function copyText(id){
+    navigator.clipboard.writeText(document.getElementById(id).innerText);
+    alert("Copied!");
+}
+
+// Download text as .txt file
+function downloadText(id, filename){
+    const text = document.getElementById(id).innerText;
+    const blob = new Blob([text], {type: "text/plain"});
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    link.click();
+}
+</script>
+
+</head>
+
+<body>
+
+<div class="navbar">📊 Financial Intelligence Dashboard</div>
+
+<div class="container">
+
+<form method="POST">
+<textarea name="text" placeholder="Paste financial news...">{{input_text}}</textarea>
+<br><br>
+<input type="range" name="length" min="1" max="10" value="3">
+<br><br>
+<button type="submit">Analyze</button>
+</form>
+
+{% if summary %}
+
+<div class="card">
+<h3>📌 Summary</h3>
+<p id="s">{{summary}}</p>
+<button onclick="copyText('s')">Copy</button>
+<button onclick="downloadText('s','summary.txt')">Download</button>
+</div>
+
+<div class="card">
+<h3>🤖 AI Summary</h3>
+<p id="a">{{ai_sum}}</p>
+<button onclick="copyText('a')">Copy</button>
+<button onclick="downloadText('a','ai_summary.txt')">Download</button>
+</div>
+
+<div class="card">
+<h3>🔑 Keywords</h3>
+<p>{{keywords}}</p>
+</div>
+
+<div class="card">
+<h3>🧠 Fake News</h3>
+<p>{{fake_news}}</p>
+</div>
+
+<div class="card">
+<h3>📊 Sentiment: {{sentiment}}</h3>
+<h4>{{trend}}</h4>
+<h4>{{prediction}}</h4>
+
+<div class="chart-container">
+
+<div class="chart-box">
+<canvas id="barChart"></canvas>
+</div>
+
+<div class="chart-box">
+<canvas id="pieChart"></canvas>
+</div>
+
+</div>
+</div>
+
+<div class="card">
+<h3>🏢 Entities</h3>
+<ul>
+{% for e in entities %}
+<li>{{e[0]}} - {{e[1]}}</li>
+{% endfor %}
+</ul>
+</div>
+
+<script>
+let score = {{ score if score else 0 }};
+
+// 🔥 FIX → amplify small values
+let displayScore = score * 5;
+
+// BAR CHART
+new Chart(document.getElementById("barChart"), {
+type: 'bar',
+data: {
+labels: ["Sentiment Score"],
+datasets: [{
+label: "Score",
+data: [displayScore],
+backgroundColor: score > 0 ? "#00e676" : score < 0 ? "#ff1744" : "#aaa",
+borderRadius: 10
+}]
+},
+options: {
+plugins: {
+legend: { labels: { color: "white", font: { size: 13 } } }
+},
+scales: {
+y: { min: -1, max: 1, ticks: { color: "white" }, grid: { color: "rgba(255,255,255,0.15)" } },
+x: { ticks: { color: "white" }, grid: { color: "rgba(255,255,255,0.15)" } }
+}
+}
+});
+
+// PIE CHART
+new Chart(document.getElementById("pieChart"), {
+type: 'pie',
+data: {
+labels: ["Positive","Negative","Neutral"],
+datasets: [{
+data: [
+score>0?score:0,
+score<0?Math.abs(score):0,
+score==0?1:0
+],
+backgroundColor: ['#00e676','#ff1744','#aaa']
+}]
+},
+options: {
+plugins: {
+legend: { labels: { color: "white", font: { size: 13 } } }
+}
+}
+});
+</script>
+
+{% endif %}
+
+</div>
+
+</body>
+</html>
